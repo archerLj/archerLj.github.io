@@ -1,0 +1,68 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Web Tools</title>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <style>
+            #beginCode {
+                width: 100px;
+                height:40px;
+                color: #000000;
+                background: white;
+                border-radius:5px;
+            }
+            
+            #beginCode:active {
+                background: #000000;
+                color: white;
+            }
+        
+            #address {
+                width: 300px;
+                height: 30px;
+                border-radius: 5px;
+            }
+        </style>
+        <script>
+            $(document).ready(function(){
+                $("#success").hide();
+                $("#failed").hide();
+                $("#beginCode").click(function(){
+                    var address = $("#address").val();
+                    if (address == null || address.trim().length <= 0) {
+                        $("#failed").show();
+                        $("#failed").text("请先输入正确的地址!");
+                        return;
+                    }
+                    $.get("https://restapi.amap.com/v3/geocode/geo?address="+address+"&key=a38d92a946967974cb17920cfe1a223e", function(data, status){
+                          console.log(data);
+                          console.log(status);
+                          if(status == "success"){
+                            var geocodes = data.geocodes;
+                            if (geocodes.length > 0){
+                                var location = "地址解析结果：" + geocodes[0].location;
+                                $("#success").text(location);
+                                $("#success").show();
+                                $("#failed").hide();
+                            } else {
+                                $("#success").hide();
+                                $("#failed").show();
+                                $("#failed").text("地址解析失败!");
+                            }
+                          }
+                    });
+                });
+            });
+        </script>
+    </head>
+    
+    <body style="padding-top:50px; padding-left: 100px; padding-bottom:50px;">
+        <h2>高德/地理编码</h2>
+        请输入地址：<br/><br/>
+        <input type="text" name="address" id="address"/><br/>
+        <br><br>
+        <button type="button" id="beginCode">开始编码</button>
+        <h4><font color="red" id="failed"></font></h4>
+        <h4 id="success"></h4>
+    </body>
+</html>
