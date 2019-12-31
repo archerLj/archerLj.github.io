@@ -3,6 +3,11 @@
         <meta charset="utf-8">
         <title>Web Tools</title>
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+        <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
+        <script type="text/javascript" src="https://cache.amap.com/lbs/static/addToolbar.js"></script>
+        <script src="http://webapi.amap.com/maps?v=1.4.3&key=a38d92a946967974cb17920cfe1a223e&plugin=AMap.PlaceSearch,AMap.AdvancedInfoWindow"></script>
+        <script src="http://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
         <style>
             #beginCode {
                 width: 100px;
@@ -22,28 +27,69 @@
                 height: 30px;
                 border-radius: 5px;
             }
+        
+            #container {
+                margin-top: 330px;
+                width: 80%;
+                margin-left: 5%;
+                height:600px;
+            }
         </style>
         <script>
             $(document).ready(function(){
+                              
+                var marker;
+                var map;
+                              
                 $("#success").hide();
                 $("#failed").hide();
+                              
+                // 开始解析地址
                 $("#beginCode").click(function(){
+                                    
+                    // 清空地图上的标记
+                    if (marker != null) {
+                        map.remove(marker);
+                    }
+                        
+                    // 获取输入的地址
                     var address = $("#address").val();
                     if (address == null || address.trim().length <= 0) {
                         $("#failed").show();
                         $("#failed").text("请先输入正确的地址!");
                         return;
                     }
+                       
+                    // 调用高德API解析地址
                     $.get("https://restapi.amap.com/v3/geocode/geo?address="+address+"&key=a38d92a946967974cb17920cfe1a223e", function(data, status){
-                          console.log(data);
-                          console.log(status);
+                          
                           if(status == "success"){
                             var geocodes = data.geocodes;
                             if (geocodes.length > 0){
+                          
+                                // 获取经纬度
                                 var location = "地址解析结果：" + geocodes[0].location;
                                 $("#success").text(location);
                                 $("#success").show();
                                 $("#failed").hide();
+                          
+                                var locationArr = geocodes[0].location.split(",");
+                          
+                                // 刷新地图
+                                map = new AMap.Map('container', {
+                                        resizeEnable: true,
+                                        zoom:17,
+                                        center: [locationArr[0], locationArr[1]]
+                                });
+                          
+                                // 添加标记
+                                marker = new AMap.Marker({
+                                                position: new AMap.LngLat(locationArr[0], locationArr[1]),
+                                                icon: './images/mhd.png',
+                                                title: '高德解析后的位置'
+                                            });
+                                map.add(marker);
+                          
                             } else {
                                 $("#success").hide();
                                 $("#failed").show();
@@ -52,17 +98,45 @@
                           }
                     });
                 });
+                              
+                map = new AMap.Map('container', {
+                    resizeEnable: true,
+                    zoom:11,
+                    center: [116.397428, 39.90923]//默认的地图中心经纬度
+                });
+                //定位
+                map.plugin('AMap.Geolocation', function () {
+                    geolocation = new AMap.Geolocation({
+                        enableHighAccuracy: true,//是否使用高精度定位，默认:true
+                        timeout: 10000,          //超过10秒后停止定位，默认：无穷大
+                        maximumAge: 0,           //定位结果缓存0毫秒，默认：0
+                        convert: true,           //自动偏移坐标，偏移后的坐标为高德坐标，默认：true
+                        showButton: true,        //显示定位按钮，默认：true
+                        buttonPosition: 'LB',    //定位按钮停靠位置，默认：'LB'，左下角
+                        buttonOffset: new AMap.Pixel(10, 20),//定位按钮与设置的停靠位置的偏移量，默认：Pixel(10, 20)
+                        showMarker: true,        //定位成功后在定位到的位置显示点标记，默认：true
+                        showCircle: true,        //定位成功后用圆圈表示定位精度范围，默认：true
+                        panToLocation: true,     //定位成功后将定位到的位置作为地图中心点，默认：true
+                        zoomToAccuracy:true      //定位成功后调整地图视野范围使定位位置及精度范围视野内可见，默认：false
+                    });
+                    map.addControl(geolocation);
+                    geolocation.getCurrentPosition();
+                });
+
             });
         </script>
     </head>
     
     <body style="padding-top:50px; padding-left: 100px; padding-bottom:50px;">
-        <h2>高德/地理编码</h2>
-        请输入地址：<br/><br/>
-        <input type="text" name="address" id="address"/><br/>
-        <br><br>
-        <button type="button" id="beginCode">开始编码</button>
-        <h4><font color="red" id="failed"></font></h4>
-        <h4 id="success"></h4>
+        <div>
+            <h2>高德/地理编码</h2>
+            请输入地址：<br/><br/>
+            <input type="text" name="address" id="address"/><br/>
+            <br><br>
+            <button type="button" id="beginCode">开始编码</button>
+            <h4><font color="red" id="failed"></font></h4>
+            <h4 id="success"></h4>
+        </div>
+        <div id="container"></div>
     </body>
 </html>
